@@ -1,8 +1,10 @@
 #include "proxy_server.h"
 #include <cstring>
 #include <iostream>
+#include <sqlite3.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include "../constants.h"
 #include "../logger/logger.h"
 
 ProxyServer::ProxyServer(int port) : port_(port) {
@@ -17,11 +19,20 @@ ProxyServer::ProxyServer(int port) : port_(port) {
   sockaddr_in_.sin_addr.s_addr = INADDR_ANY;
   sockaddr_in_.sin_port = htons(port);
 
-  if (bind(server_socket_, (struct sockaddr*)&sockaddr_in_, sizeof(sockaddr_in_)) < 0) {
+  if (bind(server_socket_, (struct sockaddr *) &sockaddr_in_, sizeof(sockaddr_in_)) < 0) {
     perror("Bind failed");
     close(server_socket_);
     exit(EXIT_FAILURE);
   }
+
+  if (sqlite3_open(constants::dbname, &db_) != SQLITE_OK) {
+  }
+  // todo: handle error
+}
+
+ProxyServer::~ProxyServer() {
+  // todo: handle return value
+  (void) sqlite3_close(db_);
 }
 
 void ProxyServer::Start() {
@@ -31,15 +42,15 @@ void ProxyServer::Start() {
     exit(EXIT_FAILURE);
   }
 
-  std::cout << "Server started on port " << port_ << std::endl;
+  std::cout << "Server started on port " << port_ << "\n";
 
   while (true) {
-    int clientSocket = accept(server_socket_, nullptr, nullptr);
-    if (clientSocket < 0) {
+    int client_socket = accept(server_socket_, nullptr, nullptr);
+    if (client_socket < 0) {
       perror("Accept failed");
       continue;
     }
-    HandleClient(clientSocket);
+    HandleClient(client_socket);
   }
 }
 
@@ -54,12 +65,14 @@ void ProxyServer::HandleClient(int client_socket) {
   char buffer[1024];
   while (true) {
     ssize_t bytes_read = recv(client_socket, buffer, sizeof(buffer) - 1, 0);
-    if (bytes_read <= 0) break;
+    if (bytes_read <= 0) {
+      break;
+    }
     buffer[bytes_read] = '\0';
     std::string query(buffer);
     LogSqlQuery(query);
 
-    std::string response = "Query received: " + query;
+    std::string response = ExecuteQuery(query);
     send(client_socket, response.c_str(), response.size(), 0);
   }
   close(client_socket);
@@ -69,3 +82,26 @@ std::string ProxyServer::LogSqlQuery(const std::string &query) {
   Logger::log(query);
   return query;
 }
+std::string ProxyServer::ExecuteQuery(const std::string &query){
+  char* error_message = NULL;
+  std::string response{};
+  sqlite3_exec(db_, query.c_str(), Callback, &response, &error_message);
+  if (error_message){
+    response = "SQL error: ";
+    response += error_message;
+    sqlite3_free(error_message);
+  }
+  return response;
+}
+int ProxyServer::Callback(void *data, int argc, char **argv, char **az_col_name) {
+  std::string * response = static_cast<std::string*>(data);
+  for (int i = 0; i < argc; ++i) {
+    *response += az_col_name[i];
+    *response += " = ";
+    *response += argv[i] ? argv[i] : "NULL";
+    *response += "\n";
+  }
+  return 0;
+}
+
+

@@ -1,14 +1,19 @@
 #pragma once
 
+#include <netinet/in.h>
+#include <sqlite3.h>
 #include <string>
 #include <vector>
-#include <netinet/in.h>
 
 class ProxyServer {
   public:
     ProxyServer(int port);
+    ~ProxyServer();
     void Start();
     void Stop();
+    std::string ExecuteQuery(const std::string &query);
+    //todo: rename
+    static int Callback(void* data, int argc, char** argv, char **az_col_name);
   private:
     void HandleClient(int client_socket);
     std::string LogSqlQuery(const std::string& query);
@@ -16,4 +21,6 @@ class ProxyServer {
     int port_;
     std::vector<int> client_sockets_;
     struct sockaddr_in sockaddr_in_;
+
+    sqlite3 *db_;
 };
