@@ -18,11 +18,12 @@ rebuild: clean build
 test: rebuild
 	./${BUILD_DIR}/${TEST_EXECUTABLE}
 
-run-server: rebuild
+run-server:
 	./${BUILD_DIR}/${SERVER_EXECUTABLE}
-
-run-client:rebuild
+run-client:
 	./${BUILD_DIR}/${CLIENT_EXECUTABLE}
+run-test:
+	./${BUILD_DIR}/${TEST_EXECUTABLE}
 
 # For PostgreSQL usage
 initdb:

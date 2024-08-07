@@ -44,8 +44,8 @@ void ProxyServer::Start() {
 }
 
 void ProxyServer::Stop() {
-  for (int client_sockets : client_sockets_) {
-    close(client_sockets);
+  for (int client_socket : client_sockets_) {
+    close(client_socket);
   }
   close(server_socket_);
 }
@@ -58,7 +58,9 @@ void ProxyServer::HandleClient(int client_socket) {
     buffer[bytes_read] = '\0';
     std::string query(buffer);
     LogSqlQuery(query);
-    // Forward query to database and send response back to client
+
+    std::string response = "Query received: " + query;
+    send(client_socket, response.c_str(), response.size(), 0);
   }
   close(client_socket);
 }

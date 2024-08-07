@@ -25,7 +25,7 @@ enable_testing()
 add_executable(tests test/test_main.cc
         src/proxy-server/proxy_server.cc
         src/proxy-server/logger.cc
-        test/proxy_server_test.cc
+        test/logger_test.cc
 
 )
 target_include_directories(tests PRIVATE ${CMAKE_SOURCE_DIR}/src)

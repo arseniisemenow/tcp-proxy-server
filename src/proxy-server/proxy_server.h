@@ -11,7 +11,7 @@ class ProxyServer {
     void Stop();
   private:
     void HandleClient(int client_socket);
-    std::string LogSqlQuery(const std::string &query);
+    std::string LogSqlQuery(const std::string& query);
     int server_socket_;
     int port_;
     std::vector<int> client_sockets_;

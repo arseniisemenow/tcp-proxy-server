@@ -36,6 +36,6 @@ void sendSQLQuery(const std::string& query) {
 
 int main() {
   sendSQLQuery("SELECT * FROM persons;");
-//  sendSQLQuery("INSERT INTO users (name, age) VALUES ('Alice', 30);");
+  sendSQLQuery("INSERT INTO users (name, age) VALUES ('Alice', 30);");
   return 0;
 }
