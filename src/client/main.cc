@@ -37,7 +37,26 @@ void SendSqlQuery(const short port, const char *address, const std::string &quer
 int main() {
   const short server_port = 8080;
   const char *server_address = "127.0.0.1";
-  SendSqlQuery(server_port, server_address, "SELECT * FROM persons;");
-  SendSqlQuery(server_port, server_address, "INSERT INTO users (name, age) VALUES ('Alice', 30);");
+//
+//  const char *dropTableSQL = "DROP TABLE IF EXISTS users;";
+//  const char *createTableSQL = R"(
+//        CREATE TABLE IF NOT EXISTS users (
+//            id INTEGER PRIMARY KEY AUTOINCREMENT,
+//            name TEXT NOT NULL,
+//            age INTEGER NOT NULL
+//        );
+//    )";
+//  const char *insertDataSQL = R"(
+//        INSERT INTO users (name, age) VALUES ('Alice', 30);
+//        INSERT INTO users (name, age) VALUES ('Bob', 25);
+//        INSERT INTO users (name, age) VALUES ('Charlie', 35);
+//    )";
+
+//  SendSqlQuery(server_port, server_address, dropTableSQL);
+//  SendSqlQuery(server_port, server_address, createTableSQL);
+//  SendSqlQuery(server_port, server_address, "SELECT * FROM users;");
+//  SendSqlQuery(server_port, server_address, insertDataSQL);
+  SendSqlQuery(server_port, server_address, "SELECT * FROM users;");
+//  SendSqlQuery(server_port, server_address, "SELECT * FROM persons;");
   return 0;
 }

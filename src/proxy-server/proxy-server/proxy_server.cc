@@ -73,6 +73,7 @@ void ProxyServer::HandleClient(int client_socket) {
     LogSqlQuery(query);
 
     std::string response = ExecuteQuery(query);
+//    std::string response = "Temp response";
     send(client_socket, response.c_str(), response.size(), 0);
   }
   close(client_socket);
@@ -83,7 +84,7 @@ std::string ProxyServer::LogSqlQuery(const std::string &query) {
   return query;
 }
 std::string ProxyServer::ExecuteQuery(const std::string &query){
-  char* error_message = NULL;
+  char* error_message = nullptr;
   std::string response{};
   sqlite3_exec(db_, query.c_str(), Callback, &response, &error_message);
   if (error_message){

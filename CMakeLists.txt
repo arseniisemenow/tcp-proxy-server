@@ -19,6 +19,8 @@ FetchContent_MakeAvailable(googletest)
 
 find_package(SQLite3 REQUIRED)
 include_directories(${SQLite3_INCLUDE_DIRS})
+target_link_libraries(proxy-server SQLite::SQLite3)
+
 
 enable_testing()
 
