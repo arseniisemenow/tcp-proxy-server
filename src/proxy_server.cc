@@ -1,65 +1,112 @@
 #include "proxy_server.h"
 
-ProxyServer::ProxyServer(boost::asio::io_context& io_context, short port, const std::string& db_host, short db_port)
-    : acceptor_(io_context, tcp::endpoint(tcp::v4(), port)),
-      resolver_(io_context),
-      db_host_(db_host),
-      db_port_(db_port),
-      log_file_("sql_queries.log", std::ios_base::app) {
-    do_accept();
+ProxyServer::ProxyServer(short local_port, const std::string& db_host, short db_port)
+    : db_host_(db_host), db_port_(db_port), log_file_("sql_queries.log", std::ios_base::app) {
+  local_socket_ = setup_socket(local_port);
 }
 
-void ProxyServer::do_accept() {
-    auto client_socket = std::make_shared<tcp::socket>(acceptor_.get_io_context());
-    acceptor_.async_accept(*client_socket, [this, client_socket](boost::system::error_code ec) {
-        if (!ec) {
-            handle_client(client_socket);
-        }
-        do_accept();
-    });
+int ProxyServer::setup_socket(short port) {
+  int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+  if (sockfd < 0) {
+    perror("socket");
+    exit(EXIT_FAILURE);
+  }
+
+  int opt = 1;
+  if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
+    perror("setsockopt");
+    exit(EXIT_FAILURE);
+  }
+
+  sockaddr_in addr;
+  addr.sin_family = AF_INET;
+  addr.sin_addr.s_addr = INADDR_ANY;
+  addr.sin_port = htons(port);
+
+  if (bind(sockfd, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
+    perror("bind");
+    exit(EXIT_FAILURE);
+  }
+
+  if (listen(sockfd, SOMAXCONN) < 0) {
+    perror("listen");
+    exit(EXIT_FAILURE);
+  }
+
+  return sockfd;
 }
 
-void ProxyServer::handle_client(std::shared_ptr<tcp::socket> client_socket) {
-    auto endpoints = resolver_.resolve(db_host_, std::to_string(db_port_));
-    auto server_socket = std::make_shared<tcp::socket>(client_socket->get_io_context());
+void ProxyServer::run() {
+  fd_set master_set, read_set;
+  FD_ZERO(&master_set);
+  FD_SET(local_socket_, &master_set);
+  int max_fd = local_socket_;
 
-    boost::asio::async_connect(*server_socket, endpoints, [this, client_socket, server_socket](boost::system::error_code ec, tcp::endpoint) {
-        if (!ec) {
-            handle_server(client_socket, server_socket);
-        }
-    });
-}
+  while (true) {
+    read_set = master_set;
 
-void ProxyServer::handle_server(std::shared_ptr<tcp::socket> client_socket, std::shared_ptr<tcp::socket> server_socket) {
-    auto client_to_server_buffer = std::make_shared<boost::asio::streambuf>();
-    auto server_to_client_buffer = std::make_shared<boost::asio::streambuf>();
+    if (select(max_fd + 1, &read_set, nullptr, nullptr, nullptr) < 0) {
+      perror("select");
+      exit(EXIT_FAILURE);
+    }
 
-    boost::asio::async_read_until(*client_socket, *client_to_server_buffer, '\0',
-        [this, client_socket, server_socket, client_to_server_buffer](boost::system::error_code ec, std::size_t length) {
-            if (!ec) {
-                std::istream is(client_to_server_buffer.get());
-                std::string sql_query(length, '\0');
-                is.read(&sql_query[0], length);
-                log_file_ << sql_query << std::endl;
-
-                boost::asio::async_write(*server_socket, *client_to_server_buffer,
-                    [this, client_socket, server_socket, client_to_server_buffer](boost::system::error_code ec, std::size_t) {
-                        if (!ec) {
-                            handle_server(client_socket, server_socket);
-                        }
-                    });
+    for (int fd = 0; fd <= max_fd; ++fd) {
+      if (FD_ISSET(fd, &read_set)) {
+        if (fd == local_socket_) {
+          sockaddr_in client_addr;
+          socklen_t client_len = sizeof(client_addr);
+          int client_socket = accept(local_socket_, (struct sockaddr*)&client_addr, &client_len);
+          if (client_socket < 0) {
+            perror("accept");
+          } else {
+            fcntl(client_socket, F_SETFL, O_NONBLOCK);
+            FD_SET(client_socket, &master_set);
+            if (client_socket > max_fd) {
+              max_fd = client_socket;
             }
-        });
+          }
+        } else {
+          handle_client(fd);
+          close(fd);
+          FD_CLR(fd, &master_set);
+        }
+      }
+    }
+  }
+}
 
-    boost::asio::async_read_until(*server_socket, *server_to_client_buffer, '\0',
-        [this, client_socket, server_socket, server_to_client_buffer](boost::system::error_code ec, std::size_t) {
-            if (!ec) {
-                boost::asio::async_write(*client_socket, *server_to_client_buffer,
-                    [this, client_socket, server_socket, server_to_client_buffer](boost::system::error_code ec, std::size_t) {
-                        if (!ec) {
-                            handle_server(client_socket, server_socket);
-                        }
-                    });
-            }
-        });
+void ProxyServer::handle_client(int client_socket) {
+  char buffer[4096];
+  int bytes_read = recv(client_socket, buffer, sizeof(buffer) - 1, 0);
+  if (bytes_read <= 0) {
+    return;
+  }
+  buffer[bytes_read] = '\0';
+
+  log_query(buffer);
+
+  int server_socket = setup_socket(0);
+  sockaddr_in server_addr;
+  server_addr.sin_family = AF_INET;
+  server_addr.sin_port = htons(db_port_);
+  inet_pton(AF_INET, db_host_.c_str(), &server_addr.sin_addr);
+
+  if (connect(server_socket, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0) {
+    perror("connect");
+    close(server_socket);
+    return;
+  }
+
+  send(server_socket, buffer, bytes_read, 0);
+
+  bytes_read = recv(server_socket, buffer, sizeof(buffer) - 1, 0);
+  if (bytes_read > 0) {
+    send(client_socket, buffer, bytes_read, 0);
+  }
+
+  close(server_socket);
+}
+
+void ProxyServer::log_query(const std::string& query) {
+  log_file_ << query << std::endl;
 }
