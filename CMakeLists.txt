@@ -1,12 +1,14 @@
 cmake_minimum_required(VERSION 3.14)
-project(TCPProxyServer)
+project(proxy-server)
 
 set(CMAKE_CXX_STANDARD 17)
 
-# Add the main executable
-add_executable(TCPProxyServer src/main.cc src/proxy_server.cc)
+add_executable(proxy-server src/proxy-server/main.cc src/proxy-server/proxy_server.cc
+        src/proxy-server/logger.cc
+        src/proxy-server/logger.h)
+add_executable(client
+        src/client/main.cc)
 
-# Fetch Google Test
 include(FetchContent)
 FetchContent_Declare(
         googletest
@@ -14,21 +16,18 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(googletest)
 
+find_package(SQLite3 REQUIRED)
+include_directories(${SQLite3_INCLUDE_DIRS})
 
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(PQXX REQUIRED libpqxx)
-include_directories(${PQXX_INCLUDE_DIRS})
-link_directories(${PQXX_LIBRARY_DIRS})
-
-# Enable testing
 enable_testing()
 
 # Add test executable
-add_executable(tests
-        src/proxy_server.cc
-        test/test_proxy_server.cc)
-target_include_directories(tests PRIVATE ${CMAKE_SOURCE_DIR}/src)
-target_link_libraries(tests gtest gtest_main ${PQXX_LIBRARIES})
-add_test(NAME proxy_server_tests COMMAND tests)
+add_executable(tests test/test_main.cc
+        src/proxy-server/proxy_server.cc
+        src/proxy-server/logger.cc
+        test/proxy_server_test.cc
 
-target_link_libraries(tests gtest gtest_main)
+)
+target_include_directories(tests PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_link_libraries(tests gtest gtest_main ${SQLite3_LIBRARIES})
+add_test(NAME proxy_server_tests COMMAND tests)
