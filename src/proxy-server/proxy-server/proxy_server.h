@@ -13,7 +13,7 @@ class ProxyServer {
     void Stop();
     std::string ExecuteQuery(const std::string &query);
     //todo: rename
-    static int Callback(void* data, int argc, char** argv, char **az_col_name);
+    static int Callback(void* data, int argc, char** argv, char **column_name);
   private:
     void HandleClient(int client_socket);
     std::string LogSqlQuery(const std::string& query);

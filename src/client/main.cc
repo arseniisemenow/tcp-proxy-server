@@ -39,13 +39,7 @@ int main() {
   const char *server_address = "127.0.0.1";
 //
 //  const char *dropTableSQL = "DROP TABLE IF EXISTS users;";
-//  const char *createTableSQL = R"(
-//        CREATE TABLE IF NOT EXISTS users (
-//            id INTEGER PRIMARY KEY AUTOINCREMENT,
-//            name TEXT NOT NULL,
-//            age INTEGER NOT NULL
-//        );
-//    )";
+  const char *createTableSQL = "CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT,name TEXT NOT NULL,age INTEGER NOT NULL);";
 //  const char *insertDataSQL = R"(
 //        INSERT INTO users (name, age) VALUES ('Alice', 30);
 //        INSERT INTO users (name, age) VALUES ('Bob', 25);
@@ -53,10 +47,21 @@ int main() {
 //    )";
 
 //  SendSqlQuery(server_port, server_address, dropTableSQL);
-//  SendSqlQuery(server_port, server_address, createTableSQL);
 //  SendSqlQuery(server_port, server_address, "SELECT * FROM users;");
 //  SendSqlQuery(server_port, server_address, insertDataSQL);
-  SendSqlQuery(server_port, server_address, "SELECT * FROM users;");
+//  SendSqlQuery(server_port, server_address, createTableSQL);
+//  SendSqlQuery(server_port, server_address, "SELECT * FROM users;");
+//  SendSqlQuery(server_port, server_address, "SELECT 1;");
 //  SendSqlQuery(server_port, server_address, "SELECT * FROM persons;");
+//  SendSqlQuery(server_port, server_address, "SELECT * FROM users;");
+//  SendSqlQuery(server_port, server_address, "SELECT * FROM users;");
+  SendSqlQuery(server_port, server_address, "SELECT sqlite_version();");
+  SendSqlQuery(server_port, server_address, "PRAGMA database_list;");
+  SendSqlQuery(server_port, server_address, "PRAGMA page_size;");
+  SendSqlQuery(server_port, server_address, "PRAGMA encoding;");
+  SendSqlQuery(server_port, server_address, "PRAGMA compile_options;");
+  SendSqlQuery(server_port, server_address, "PRAGMA synchronous;");
+
+
   return 0;
 }

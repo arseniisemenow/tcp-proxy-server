@@ -94,10 +94,10 @@ std::string ProxyServer::ExecuteQuery(const std::string &query){
   }
   return response;
 }
-int ProxyServer::Callback(void *data, int argc, char **argv, char **az_col_name) {
+int ProxyServer::Callback(void *data, int argc, char **argv, char **column_name) {
   std::string * response = static_cast<std::string*>(data);
   for (int i = 0; i < argc; ++i) {
-    *response += az_col_name[i];
+    *response += column_name[i];
     *response += " = ";
     *response += argv[i] ? argv[i] : "NULL";
     *response += "\n";
