@@ -4,5 +4,5 @@
 
 class Logger {
   public:
-    static const std::string log(const std::string &message);
+    static std::string log(const std::string &message);
 };

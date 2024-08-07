@@ -69,11 +69,16 @@ void ProxyServer::HandleClient(int client_socket) {
       break;
     }
     buffer[bytes_read] = '\0';
-    std::string query(buffer);
-    LogSqlQuery(query);
+    LogSqlQuery(buffer);
 
-    std::string response = ExecuteQuery(query);
+    std::string response = ExecuteQuery(buffer);
 //    std::string response = "Temp response";
+    /* fixme: For some reasons when query does not return any data
+     * and response is empty because of this, send() is not working correct
+     */
+    if (response.empty()){
+      response += "NULL";
+    }
     send(client_socket, response.c_str(), response.size(), 0);
   }
   close(client_socket);
@@ -86,6 +91,7 @@ std::string ProxyServer::LogSqlQuery(const std::string &query) {
 std::string ProxyServer::ExecuteQuery(const std::string &query){
   char* error_message = nullptr;
   std::string response{};
+  std::cerr << "The query is about to exec: " << query.c_str() << "\n";
   sqlite3_exec(db_, query.c_str(), Callback, &response, &error_message);
   if (error_message){
     response = "SQL error: ";
