@@ -1,4 +1,4 @@
-#include "proxy_server.h"
+#include "proxy-server/proxy_server.h"
 
 int main() {
   ProxyServer server(8080);

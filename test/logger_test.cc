@@ -1,5 +1,5 @@
+#include "proxy-server/logger/logger.h"
 #include <gtest/gtest.h>
-#include "proxy-server/logger.h"
 
 TEST(TCPProxyServerTest, LogSQLQuery) {
   std::string query = "SELECT * FROM unit_tests_table;";
