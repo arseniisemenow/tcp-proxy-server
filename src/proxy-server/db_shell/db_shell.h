@@ -16,6 +16,9 @@ public:
   std::string ExecuteQuery(const std::string &query);
 
 private:
+  std::string &HandleQueryError(char *error_message,
+                                std::string &response) const;
+  std::string &HandleEmptyResponse(std::string &response) const;
   static int Callback(void *data, int argc, char **argv, char **column_name);
 
 private:

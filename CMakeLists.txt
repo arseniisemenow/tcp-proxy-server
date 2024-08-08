@@ -3,12 +3,17 @@ project(proxy-server)
 
 set(CMAKE_CXX_STANDARD 17)
 
-add_executable(proxy-server src/proxy-server/main.cc src/proxy-server/proxy-server/proxy_server.cc
+set(SERVER_SOURCES
+        src/proxy-server/proxy-server/proxy_server.cc
         src/proxy-server/logger/logger.cc
         src/proxy-server/logger/logger.h
         src/proxy-server/constants.h
         src/proxy-server/db_shell/db_shell.cc
         src/proxy-server/db_shell/db_shell.h
+)
+
+add_executable(proxy-server src/proxy-server/main.cc ${SERVER_SOURCES}
+
 )
 add_executable(client
         src/client/main.cc)
@@ -29,8 +34,7 @@ enable_testing()
 
 # Add test executable
 add_executable(tests test/test_main.cc
-        src/proxy-server/proxy-server/proxy_server.cc
-        src/proxy-server/logger/logger.cc
+        ${SERVER_SOURCES}
         test/logger_test.cc
 
 )

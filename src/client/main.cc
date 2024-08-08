@@ -41,8 +41,7 @@ int main() {
   const char *server_address = "127.0.0.1";
 
   const char *drop_table_sql = "DROP TABLE IF EXISTS users;";
-  const char *create_table_sql =
-      R"("CREATE TABLE IF NOT EXISTS users(id INTEGER PRIMARY KEY AUTOINCREMENT,name TEXT NOT NULL,age INTEGER NOT NULL);")";
+  const char *create_table_sql = "CREATE TABLE IF NOT EXISTS users(id INTEGER PRIMARY KEY AUTOINCREMENT,name TEXT NOT NULL,age INTEGER NOT NULL);";
   const char *insert_data_sql = R"(
         INSERT INTO users (name, age) VALUES ('Oliver', 25);
         INSERT INTO users (name, age) VALUES ('Wladimir', 30);
@@ -50,6 +49,8 @@ int main() {
     )";
   const char *select_data_sql = R"(SELECT * FROM users;)";
   const char *select_sqlite_version_sql = R"(SELECT sqlite_version();)";
+
+
   //  SendSqlQuery(server_port, server_address, drop_table_sql);
   SendSqlQuery(server_port, server_address, select_data_sql);
   SendSqlQuery(server_port, server_address, create_table_sql);

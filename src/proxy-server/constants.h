@@ -4,7 +4,7 @@
 #include <istream>
 
 namespace constants {
-inline constexpr char kDbname[] = "test.db_shell";
+inline constexpr char kDbname[] = "test.db";
 }
 
 #endif // PROXY_SERVER_SRC_PROXY_SERVER_CONSTANTS_H_

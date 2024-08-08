@@ -22,11 +22,20 @@ std::string DBShell::ExecuteQuery(const std::string &query) {
   char *error_message{nullptr};
   std::string response{};
   sqlite3_exec(db_, query.c_str(), Callback, &response, &error_message);
+  response = HandleQueryError(error_message, response);
+  response = HandleEmptyResponse(response);
+  return response;
+}
+std::string &DBShell::HandleQueryError(char *error_message,
+                                       std::string &response) const {
   if (error_message) {
     response = "SQL error: ";
     response += error_message;
     sqlite3_free(error_message);
   }
+  return response;
+}
+std::string &DBShell::HandleEmptyResponse(std::string &response) const {
   if (response.empty()) {
     response += "NULL";
   }

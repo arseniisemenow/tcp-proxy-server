@@ -9,14 +9,14 @@
 
 ProxyServer::ProxyServer(int port) : port_(port) {
   server_socket_ = socket(AF_INET, SOCK_STREAM, 0);
-  if (server_socket_ < 0) {
+  if (server_socket_) {
     perror("Failed to create socket");
     exit(EXIT_FAILURE);
   }
 
   memset(&sockaddr_in_, 0, sizeof(sockaddr_in_));
   sockaddr_in_.sin_family = AF_INET;
-  sockaddr_in_.sin_addr.s_addr = IN_LOCAL_GROUP(1);
+  sockaddr_in_.sin_addr.s_addr = INADDR_ANY;
   sockaddr_in_.sin_port = htons(port);
 
   if (bind(server_socket_, (struct sockaddr *) &sockaddr_in_, sizeof(sockaddr_in_)) < 0) {
@@ -24,12 +24,11 @@ ProxyServer::ProxyServer(int port) : port_(port) {
     close(server_socket_);
     exit(EXIT_FAILURE);
   }
-
 }
 
 void ProxyServer::Start() {
-
-  if (listen(server_socket_, 5) < 0) {
+  //todo: what is 5 here?
+  if (listen(server_socket_, 5)) {
     perror("Listen failed");
     close(server_socket_);
     exit(EXIT_FAILURE);
@@ -38,7 +37,7 @@ void ProxyServer::Start() {
 
   while (true) {
     int client_socket = accept(server_socket_, nullptr, nullptr);
-    if (client_socket < 0) {
+    if (client_socket) {
       perror("Accept failed");
       continue;
     }
