@@ -4,9 +4,10 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-void SendSqlQuery(const short port, const char *address, const std::string &query) {
-  int server_socket = socket(AF_INET, SOCK_STREAM, 0);
-  if (server_socket < 0) {
+void SendSqlQuery(const short port, const char *address,
+                  const std::string &query) {
+  int client_socket = socket(AF_INET, SOCK_STREAM, 0);
+  if (client_socket < 0) {
     perror("Socket creation failed");
     exit(EXIT_FAILURE);
   }
@@ -17,21 +18,22 @@ void SendSqlQuery(const short port, const char *address, const std::string &quer
   server_addr.sin_port = htons(port);
   server_addr.sin_addr.s_addr = inet_addr(address);
 
-  if (connect(server_socket, (struct sockaddr *) &server_addr, sizeof(server_addr)) < 0) {
+  if (connect(client_socket, (struct sockaddr *)&server_addr,
+              sizeof(server_addr)) < 0) {
     perror("Connect failed");
-    close(server_socket);
+    close(client_socket);
     exit(EXIT_FAILURE);
   }
 
-  send(server_socket, query.c_str(), query.size(), 0);
+  send(client_socket, query.c_str(), query.size(), 0);
   char buffer[1024] = {0};
-  ssize_t bytes_read = recv(server_socket, buffer, sizeof(buffer) - 1, 0);
+  ssize_t bytes_read = recv(client_socket, buffer, sizeof(buffer) - 1, 0);
   if (bytes_read > 0) {
     buffer[bytes_read] = '\0';
     std::cout << "Server response: " << buffer << std::endl;
   }
 
-  close(server_socket);
+  close(client_socket);
 }
 
 int main() {
@@ -40,10 +42,7 @@ int main() {
 
   const char *drop_table_sql = "DROP TABLE IF EXISTS users;";
   const char *create_table_sql =
-      R"("CREATE TABLE IF NOT EXISTS users
-        (id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        age INTEGER NOT NULL);")";
+      R"("CREATE TABLE IF NOT EXISTS users(id INTEGER PRIMARY KEY AUTOINCREMENT,name TEXT NOT NULL,age INTEGER NOT NULL);")";
   const char *insert_data_sql = R"(
         INSERT INTO users (name, age) VALUES ('Oliver', 25);
         INSERT INTO users (name, age) VALUES ('Wladimir', 30);

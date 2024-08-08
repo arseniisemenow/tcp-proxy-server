@@ -1,4 +1,4 @@
-# Current machine is MacOS Ventura 13.6.7
+# Current machine: MacOS Ventura 13.6.7
 
 SERVER_EXECUTABLE=proxy-server
 CLIENT_EXECUTABLE=client
@@ -11,7 +11,7 @@ clean:
 
 build:
 	cmake -B $(BUILD_DIR)
-	cmake --build $(BUILD_DIR) -j 8
+	cmake --build $(BUILD_DIR)
 
 rebuild: clean build
 
