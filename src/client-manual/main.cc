@@ -4,6 +4,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
+int ConnectToServer(const short port, const char *address);
 void SendSqlQuery(const int client_socket, const std::string &query) {
   send(client_socket, query.c_str(), query.size(), 0);
   char buffer[1024] = {0};
@@ -13,8 +14,6 @@ void SendSqlQuery(const int client_socket, const std::string &query) {
     std::cout << "Server response: " << buffer << std::endl;
   }
 }
-
-
 int ConnectToServer(const short port, const char *address) {
   int client_socket = socket(AF_INET, SOCK_STREAM, 0);
   if (client_socket < 0) {
@@ -40,23 +39,26 @@ int main() {
   const short server_port = 8080;
   const char *server_address = "127.0.0.1";
 
-  const char *drop_table_sql = "DROP TABLE IF EXISTS users;";
-  const char *create_table_sql = "CREATE TABLE IF NOT EXISTS users(id INTEGER PRIMARY KEY AUTOINCREMENT,name TEXT NOT NULL,age INTEGER NOT NULL);";
-  const char *insert_data_sql = R"(
-        INSERT INTO users (name, age) VALUES ('Oliver', 25);
-        INSERT INTO users (name, age) VALUES ('Wladimir', 30);
-        INSERT INTO users (name, age) VALUES ('Kris', 35);
-    )";
-  const char *select_data_sql = R"(SELECT * FROM users;)";
-  const char *select_sqlite_version_sql = R"(SELECT sqlite_version();)";
+  std::string user_query;
+
   int client_socket = ConnectToServer(server_port, server_address);
 
-  //  SendSqlQuery(server_port, server_address, drop_table_sql);
-  SendSqlQuery(client_socket, select_data_sql);
-  SendSqlQuery(client_socket, create_table_sql);
-  SendSqlQuery(client_socket, select_data_sql);
-  SendSqlQuery(client_socket, insert_data_sql);
-  SendSqlQuery(client_socket, select_data_sql);
-  SendSqlQuery(client_socket, select_sqlite_version_sql);
+  std:: cout << "Connected to the server on port " << server_port << "\n";
+  std::cout << "Type your SQL query and press Enter to execute (type 'exit' to quit):\n";
+
+  while (true) {
+    std::cout << "> ";
+    std::getline(std::cin, user_query);
+
+    if (user_query == "exit") {
+      break;
+    }
+
+    SendSqlQuery(client_socket, user_query);
+  }
+
+  close(client_socket);
+
+  std::cout << "Exiting client...\n";
   return 0;
 }

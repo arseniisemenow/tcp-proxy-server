@@ -18,13 +18,14 @@ int DBShell::TearDown() {
   return error_code;
 }
 
-std::string DBShell::ExecuteQuery(const std::string &query) {
+int DBShell::ExecuteQuery(const std::string &query, std::string &response) {
+  int error_code{0};
   char *error_message{nullptr};
-  std::string response{};
   sqlite3_exec(db_, query.c_str(), Callback, &response, &error_message);
+  if (error_message){error_code = 1;}
   response = HandleQueryError(error_message, response);
   response = HandleEmptyResponse(response);
-  return response;
+  return error_code;
 }
 std::string &DBShell::HandleQueryError(char *error_message,
                                        std::string &response) const {

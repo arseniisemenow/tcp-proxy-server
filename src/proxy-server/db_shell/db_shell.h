@@ -13,7 +13,7 @@ public:
   int TearDown();
 
 public:
-  std::string ExecuteQuery(const std::string &query);
+  int ExecuteQuery(const std::string &query, std::string &response);
 
 private:
   std::string &HandleQueryError(char *error_message,
