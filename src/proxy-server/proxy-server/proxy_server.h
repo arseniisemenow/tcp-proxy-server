@@ -14,7 +14,7 @@ class ProxyServer {
 public:
   explicit ProxyServer(int port, int backlog_size = 10);
   ~ProxyServer() {
-      close(server_s  ocket_);
+      close(server_socket_);
 };
   void Start();
   void Stop();
