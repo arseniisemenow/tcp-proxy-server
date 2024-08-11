@@ -16,7 +16,9 @@ add_executable(proxy-server src/proxy-server/main.cc ${SERVER_SOURCES}
 
 )
 add_executable(client
-        src/client/main.cc)
+        src/clients/client/main.cc)
+add_executable(client-manual
+        src/clients/client-manual/main.cc)
 
 include(FetchContent)
 FetchContent_Declare(

@@ -4,12 +4,16 @@
 #include <sqlite3.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <thread>
+#include <mutex>
 #include "../constants.h"
 #include "../logger/logger.h"
 
-ProxyServer::ProxyServer(int port) : port_(port) {
+std::mutex db_mutex;
+
+ProxyServer::ProxyServer(int port, int max_connections) : port_(port), backlog_size_(max_connections) {
   server_socket_ = socket(AF_INET, SOCK_STREAM, 0);
-  if (server_socket_) {
+  if (server_socket_ < 0) {
     perror("Failed to create socket");
     exit(EXIT_FAILURE);
   }
@@ -27,8 +31,7 @@ ProxyServer::ProxyServer(int port) : port_(port) {
 }
 
 void ProxyServer::Start() {
-  //todo: what is 5 here?
-  if (listen(server_socket_, 5)) {
+  if (listen(server_socket_, backlog_size_) < 0) {
     perror("Listen failed");
     close(server_socket_);
     exit(EXIT_FAILURE);
@@ -37,11 +40,11 @@ void ProxyServer::Start() {
 
   while (true) {
     int client_socket = accept(server_socket_, nullptr, nullptr);
-    if (client_socket) {
+    if (client_socket < 0) {
       perror("Accept failed");
       continue;
     }
-    HandleClient(client_socket);
+    std::thread(&ProxyServer::HandleClient, this, client_socket).detach();
   }
 }
 
@@ -52,7 +55,7 @@ void ProxyServer::Stop() {
   close(server_socket_);
 }
 
-void ProxyServer::HandleClient(const int client_socket) {
+void ProxyServer::HandleClient(int client_socket) {
   char buffer[1024];
   while (true) {
     ssize_t bytes_read = recv(client_socket, buffer, sizeof(buffer) - 1, 0);
@@ -62,6 +65,8 @@ void ProxyServer::HandleClient(const int client_socket) {
     buffer[bytes_read] = '\0';
     LogSqlQuery(buffer);
 
+    // Protect the database access with a mutex
+    std::lock_guard<std::mutex> lock(db_mutex);
     std::string response = db_.ExecuteQuery(buffer);
     send(client_socket, response.c_str(), response.size(), 0);
   }
